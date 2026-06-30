@@ -1,0 +1,73 @@
+import copy
+from piece import Pawn, Knight, Bishop, Rook, Queen, King
+from const import ROWS, COLS
+
+
+class ChessAI:
+    def __init__(self, color="black"):
+        self.color = color
+
+    def evaluate_board(self, board):
+        score = 0
+
+        piece_values = {
+            Pawn: 1,
+            Knight: 3,
+            Bishop: 3,
+            Rook: 5,
+            Queen: 9,
+            King: 0
+        }
+
+        for row in range(ROWS):
+            for col in range(COLS):
+                square = board.squares[row][col]
+
+                if square.has_piece():
+                    piece = square.piece
+                    value = piece_values.get(type(piece), 0)
+
+                    if piece.color == self.color:
+                        score += value
+                    else:
+                        score -= value
+
+        return score
+
+    def get_all_moves(self, board, color):
+        moves = []
+
+        for row in range(ROWS):
+            for col in range(COLS):
+                square = board.squares[row][col]
+
+                if square.has_piece():
+                    piece = square.piece
+
+                    if piece.color == color:
+                        board.calc_moves(piece, row, col, bool=True)
+
+                        for move in piece.moves:
+                            moves.append((piece, move))
+
+        return moves
+
+    def get_best_move(self, board):
+        best_score = -9999
+        best_move = None
+
+        possible_moves = self.get_all_moves(board, self.color)
+
+        for piece, move in possible_moves:
+            board_copy = copy.deepcopy(board)
+            piece_copy = board_copy.squares[piece.moves[0].initial.row][piece.moves[0].initial.col].piece
+
+            board_copy.move(piece_copy, move, testing=True)
+
+            score = self.evaluate_board(board_copy)
+
+            if score > best_score:
+                best_score = score
+                best_move = (piece, move)
+
+        return best_move
